@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: ./backend\MercappBackend
+    container_name: springboot-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - mercapp-network
+
+  frontend:
+    build:
+      context: ./frontend\mercappfrontend
+    container_name: react-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - mercapp-network
+
+networks:
+  mercapp-network:
+    driver: bridge
