@@ -29,7 +29,7 @@
     <properties>
         <java.version>17</java.version>
         <!-- Propiedades para SonarQube -->
-        <sonar.host.url>http://localhost:9000</sonar.host.url>
+        <sonar.host.url>http://sonarqube:9000</sonar.host.url>
         <sonar.projectKey>mercapp-backend</sonar.projectKey>
     </properties>
     <dependencies>
