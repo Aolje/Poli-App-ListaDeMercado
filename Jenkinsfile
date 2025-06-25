@@ -22,7 +22,6 @@ pipeline {
         // ETAPA 2: CONSTRUCCIÓN Y PRUEBA DEL FRONTEND
         // ===========================================
         stage('Build & Test Frontend') {
-            // Le dice a Jenkins que ejecute esta etapa en un contenedor con Node.js
             agent {
                 docker { 
                     image 'node:18-alpine'
@@ -32,9 +31,8 @@ pipeline {
             steps {
                 script {
                     dir('frontend/mercappfrontend') {
-                        echo '✅ Iniciando construcción del Frontend dentro de un contenedor Node.js...'
+                        echo '✅ Iniciando construcción del Frontend...'
                         sh 'npm install'
-                        // Se añade --coverage para generar el reporte que SonarQube necesita
                         sh 'npm test -- --coverage --watchAll=false'
                         sh 'npm run build'
                         echo 'Frontend construido y probado exitosamente.'
@@ -42,7 +40,7 @@ pipeline {
                 }
             }
         }
-
+        
         // ===========================================
         // ETAPA 3: ANÁLISIS DE CALIDAD CON SONARQUBE
         // ===========================================
@@ -60,7 +58,6 @@ pipeline {
         }
         
         stage('SonarQube Analysis: Frontend') {
-            // Se usa el agente de Docker con Node.js
             agent {
                 docker { 
                     image 'node:18-alpine'
@@ -73,10 +70,8 @@ pipeline {
                         echo '🔍 Ejecutando análisis de calidad del Frontend...'
                         dir('frontend/mercappfrontend') {
                             sh 'npm install'
-                                                 
                             sh 'apk add --no-cache openjdk17-jre'
                             sh 'chmod +x ./node_modules/.bin/sonar-scanner'
-                            
                             sh """
                                 ./node_modules/.bin/sonar-scanner \
                                 -Dsonar.host.url=http://sonarqube:9000 \
@@ -93,29 +88,15 @@ pipeline {
                 }
             }
         }
-
+        
         // ===========================================
-        // ETAPA 4: CONSTRUCCIÓN DE IMÁGENES DOCKER
-        // ===========================================
-        stage('Build Docker Images') {
-            steps {
-                script {
-                    echo '🐳 Construyendo imágenes de Docker...'
-                    sh 'docker-compose build'
-                    echo 'Imágenes de Docker construidas exitosamente.'
-                }
-            }
-        }
-
-        // ===========================================
-        // ETAPA 5: DESPLIEGUE DE LA APLICACIÓN
+        // ETAPA 4: DESPLIEGUE DE LA APLICACIÓN
         // ===========================================
         stage('Deploy Application') {
             steps {
                 script {
                     echo '🚀 Desplegando la aplicación con Docker Compose...'
-                    sh 'docker-compose down'
-                    sh 'docker-compose up -d'
+                    sh 'docker-compose up -d --build'
                     echo '🎉 Aplicación desplegada exitosamente.'
                 }
             }
