@@ -45,6 +45,13 @@ pipeline {
         // ETAPA 3: ANÁLISIS DE CALIDAD CON SONARQUBE
         // ===========================================
         stage('SonarQube Analysis: Backend') {
+        
+            agent {
+                docker {
+                    image 'maven:3.8.5-openjdk-17'
+                    args '--network mercapp-net'
+                }
+            }
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
