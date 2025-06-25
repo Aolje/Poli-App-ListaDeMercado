@@ -53,53 +53,7 @@ pipeline {
             }
         }
         
-        // ===========================================
-        // ETAPA 4: ESPERAR A QUE SONARQUBE ESTÉ LISTO
-        // ===========================================
-        stage('Wait for SonarQube') {
-            agent {
-                docker {
-                    image 'alpine/curl:latest'
-                    args '--network mercapp-net'
-                }
-            }
-            steps {
-                // --- SOLUCIÓN AQUÍ ---
-                // Se cargan las credenciales para que el script de espera también se autentique
-                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                    script {
-                        echo '⏳ Esperando a que el servidor de SonarQube esté listo...'
-                        // Se modifica el curl para que use el token de autenticación
-                        sh '''
-                            echo "Intentando contactar a SonarQube en http://sonarqube:9000/api/system/health"
-                            timeout=300 # Límite de 5 minutos
-                            elapsed=0
-                            while true; do
-                                response=$(curl -s -w "HTTP_CODE:%{http_code}" -u "${SONAR_TOKEN}:" http://sonarqube:9000/api/system/health)
-                                http_code=$(echo "$response" | sed -e 's/.*HTTP_CODE://')
-                                body=$(echo "$response" | sed -e 's/HTTP_CODE:.*//')
 
-                                echo "Respuesta de SonarQube - Código HTTP: ${http_code}. Cuerpo: ${body}"
-                                
-                                if echo "${body}" | grep -q '"status":"UP"'; then
-                                    echo "✅ SonarQube está listo!"
-                                    break
-                                fi
-
-                                elapsed=$((elapsed + 10))
-                                if [ ${elapsed} -gt ${timeout} ]; then
-                                    echo "❌ Se agotó el tiempo de espera para SonarQube."
-                                    exit 1
-                                fi
-
-                                echo "Esperando 10 segundos más..."
-                                sleep 10
-                            done
-                        '''
-                    }
-                }
-            }
-        }
 
         // ===========================================
         // ETAPA 5: ANÁLISIS DE CALIDAD
