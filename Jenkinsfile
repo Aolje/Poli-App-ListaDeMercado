@@ -41,12 +41,9 @@ pipeline {
             }
         }
         
-
-                // ===========================================
-        // ETAPA 2.1: Esperamos red
-        // ===========================================
+        // --- ETAPA MODIFICADA ---
+        // Ahora espera activamente y de forma más detallada
         stage('Wait for SonarQube') {
-
             agent {
                 docker {
                     image 'alpine/curl:latest'
@@ -57,11 +54,32 @@ pipeline {
                 script {
                     echo '⏳ Esperando a que el servidor de SonarQube esté listo...'
                     sh '''
-                        until curl -s http://sonarqube:9000/api/system/health | grep -q '"status":"UP"'; do
-                            echo -n '.'
-                            sleep 5
+                        echo "Intentando contactar a SonarQube en http://sonarqube:9000/api/system/health"
+                        timeout=300 # Límite de 5 minutos
+                        elapsed=0
+                        while true; do
+                            # Captura el código HTTP y el cuerpo de la respuesta
+                            response=$(curl -s -w "HTTP_CODE:%{http_code}" http://sonarqube:9000/api/system/health)
+                            http_code=$(echo "$response" | sed -e 's/.*HTTP_CODE://')
+                            body=$(echo "$response" | sed -e 's/HTTP_CODE:.*//')
+
+                            echo "Respuesta de SonarQube - Código HTTP: ${http_code}. Cuerpo: ${body}"
+                            
+                            # Revisa si el cuerpo de la respuesta contiene "status":"UP"
+                            if echo "${body}" | grep -q '"status":"UP"'; then
+                                echo "✅ SonarQube está listo!"
+                                break
+                            fi
+
+                            elapsed=$((elapsed + 10))
+                            if [ ${elapsed} -gt ${timeout} ]; then
+                                echo "❌ Se agotó el tiempo de espera para SonarQube."
+                                exit 1
+                            fi
+
+                            echo "Esperando 10 segundos más..."
+                            sleep 10
                         done
-                        echo '✅ SonarQube está listo!'
                     '''
                 }
             }
