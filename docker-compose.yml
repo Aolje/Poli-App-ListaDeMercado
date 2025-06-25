@@ -11,7 +11,7 @@ services:
     ports:
       - "8096:8097"
     networks:
-      - mercapp-network
+      - mercapp-net # Usando la red con nombre fijo
 
   # Servicio para el frontend de React
   frontend:
@@ -23,16 +23,16 @@ services:
     depends_on:
       - backend
     networks:
-      - mercapp-network
+      - mercapp-net # Usando la red con nombre fijo
 
   # Contenedor para el servidor de análisis de código SonarQube
   sonarqube:
     image: sonarqube:lts-community
     container_name: sonarqube
     ports:
-      - "9000:9000" # Puerto para acceder a la interfaz de SonarQube
+      - "9000:9000"
     networks:
-      - mercapp-network
+      - mercapp-net # Usando la red con nombre fijo
     volumes:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
@@ -40,7 +40,8 @@ services:
 
 # Definición de las redes personalizadas
 networks:
-  mercapp-network:
+  mercapp-net:
+    name: mercapp-net # Nombre fijo para la red
     driver: bridge
 
 # Volúmenes para persistir los datos de SonarQube
