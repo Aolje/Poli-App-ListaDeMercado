@@ -2,8 +2,20 @@ pipeline {
     agent any
 
     stages {
+        // --- NUEVA ETAPA INICIAL ---
+        // Se asegura de que los servicios de soporte (SonarQube) estén corriendo
+        stage('Setup Environment') {
+            steps {
+                script {
+                    echo '🔧 Iniciando servicios de soporte (SonarQube)...'
+                    // Levanta solo el servicio de sonarqube para que esté disponible
+                    sh 'docker-compose up -d sonarqube'
+                }
+            }
+        }
+
         // ===========================================
-        // ETAPA 1: CONSTRUCCIÓN Y PRUEBA DEL BACKEND
+        // ETAPA 2: CONSTRUCCIÓN Y PRUEBA DEL BACKEND
         // ===========================================
         stage('Build & Test Backend') {
             steps {
@@ -19,7 +31,7 @@ pipeline {
         }
 
         // ===========================================
-        // ETAPA 2: CONSTRUCCIÓN Y PRUEBA DEL FRONTEND
+        // ETAPA 3: CONSTRUCCIÓN Y PRUEBA DEL FRONTEND
         // ===========================================
         stage('Build & Test Frontend') {
             agent {
@@ -41,8 +53,9 @@ pipeline {
             }
         }
         
-        // --- ETAPA MODIFICADA ---
-        // Ahora espera activamente y de forma más detallada
+        // ===========================================
+        // ETAPA 4: ESPERAR A QUE SONARQUBE ESTÉ LISTO
+        // ===========================================
         stage('Wait for SonarQube') {
             agent {
                 docker {
@@ -53,19 +66,18 @@ pipeline {
             steps {
                 script {
                     echo '⏳ Esperando a que el servidor de SonarQube esté listo...'
+                    // Este script esperará hasta que SonarQube responda que su estado es "UP"
                     sh '''
                         echo "Intentando contactar a SonarQube en http://sonarqube:9000/api/system/health"
                         timeout=300 # Límite de 5 minutos
                         elapsed=0
                         while true; do
-                            # Captura el código HTTP y el cuerpo de la respuesta
                             response=$(curl -s -w "HTTP_CODE:%{http_code}" http://sonarqube:9000/api/system/health)
                             http_code=$(echo "$response" | sed -e 's/.*HTTP_CODE://')
                             body=$(echo "$response" | sed -e 's/HTTP_CODE:.*//')
 
                             echo "Respuesta de SonarQube - Código HTTP: ${http_code}. Cuerpo: ${body}"
                             
-                            # Revisa si el cuerpo de la respuesta contiene "status":"UP"
                             if echo "${body}" | grep -q '"status":"UP"'; then
                                 echo "✅ SonarQube está listo!"
                                 break
@@ -86,7 +98,7 @@ pipeline {
         }
 
         // ===========================================
-        // ETAPA 3: ANÁLISIS DE CALIDAD CON SONARQUBE
+        // ETAPA 5: ANÁLISIS DE CALIDAD
         // ===========================================
         stage('SonarQube Analysis: Backend') {
             agent {
@@ -141,13 +153,14 @@ pipeline {
         }
         
         // ===========================================
-        // ETAPA 4: DESPLIEGUE DE LA APLICACIÓN
+        // ETAPA 6: DESPLIEGUE DE LA APLICACIÓN
         // ===========================================
         stage('Deploy Application') {
             steps {
                 script {
-                    echo '🚀 Desplegando la aplicación con Docker Compose...'
-                    sh 'docker-compose up -d --build'
+                    echo '🚀 Desplegando la aplicación con las nuevas imágenes...'
+                    // Actualiza solo los servicios de la aplicación, sin tocar SonarQube
+                    sh 'docker-compose up -d --build --no-deps backend frontend'
                     echo '🎉 Aplicación desplegada exitosamente.'
                 }
             }
