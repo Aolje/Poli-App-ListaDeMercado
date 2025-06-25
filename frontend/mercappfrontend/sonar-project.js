@@ -2,7 +2,7 @@ const sonarqubeScanner = require('sonar-scanner');
 
 sonarqubeScanner(
   {
-    serverUrl: 'http://localhost:9000',
+    serverUrl: 'http://sonarqube:9000',
     options: {
       'sonar.projectKey': 'mercapp-frontend',
       'sonar.projectName': 'Mercapp Frontend',
