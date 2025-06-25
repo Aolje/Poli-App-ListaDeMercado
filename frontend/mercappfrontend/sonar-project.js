@@ -3,6 +3,7 @@ const sonarqubeScanner = require('sonar-scanner');
 sonarqubeScanner(
   {
     serverUrl: 'http://sonarqube:9000',
+    token: process.env.SONAR_TOKEN,
     options: {
       'sonar.projectKey': 'mercapp-frontend',
       'sonar.projectName': 'Mercapp Frontend',

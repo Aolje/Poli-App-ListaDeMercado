@@ -45,18 +45,27 @@ pipeline {
         // ===========================================
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    echo '🔍 Ejecutando análisis de calidad con SonarQube...'
-                    
-                    // Analizar Backend
-                    dir('backend/MercappBackend') {
-                        sh './mvnw sonar:sonar'
-                    }
+                // 1. Cargar la credencial de forma segura
+                // Busca la credencial con ID 'sonarqube-token' que guardaste en Jenkins.
+                // Su valor se carga en una variable de entorno temporal llamada SONAR_TOKEN.
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    script {
+                        echo '🔍 Ejecutando análisis de calidad con SonarQube...'
 
-                    // Analizar Frontend
-                    dir('frontend/mercappfrontend') {
-                        sh 'npm install sonar-scanner --save-dev'
-                        sh 'node sonar-project.js'
+                        // 2. Analizar el Backend
+                        // Se ejecuta el comando de Maven y se le pasa el token como 
+                        // un parámetro (-Dsonar.login=...).
+                        dir('backend/MercappBackend') {
+                            sh "./mvnw sonar:sonar -Dsonar.login=${SONAR_TOKEN}"
+                        }
+
+                        // 3. Analizar el Frontend
+                        // El script 'sonar-project.js' ya sabe que debe buscar la variable
+                        // de entorno SONAR_TOKEN que creamos arriba.
+                        dir('frontend/mercappfrontend') {
+                            sh 'npm install sonar-scanner --save-dev'
+                            sh 'node sonar-project.js'
+                        }
                     }
                 }
             }
