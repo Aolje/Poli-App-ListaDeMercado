@@ -43,33 +43,43 @@ pipeline {
                 // ===========================================
         // ETAPA 3: ANÁLISIS DE CALIDAD CON SONARQUBE
         // ===========================================
-        stage('SonarQube Analysis') {
+          // Se separó en dos etapas para usar el entorno correcto para cada una
+
+        stage('SonarQube Analysis: Backend') {
             steps {
-                // 1. Cargar la credencial de forma segura
-                // Busca la credencial con ID 'sonarqube-token' que guardaste en Jenkins.
-                // Su valor se carga en una variable de entorno temporal llamada SONAR_TOKEN.
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
-                        echo '🔍 Ejecutando análisis de calidad con SonarQube...'
-
-                        // 2. Analizar el Backend
-                        // Se ejecuta el comando de Maven y se le pasa el token como 
-                        // un parámetro (-Dsonar.login=...).
+                        echo '🔍 Ejecutando análisis de calidad del Backend...'
                         dir('backend/MercappBackend') {
                             sh "./mvnw sonar:sonar -Dsonar.login=${SONAR_TOKEN}"
                         }
-
-                        // 3. Analizar el Frontend
-                        // El script 'sonar-project.js' ya sabe que debe buscar la variable
-                        // de entorno SONAR_TOKEN que creamos arriba.
+                    }
+                }
+            }
+        }
+        
+        stage('SonarQube Analysis: Frontend') {
+            // Se usa el agente de Docker con Node.js
+            agent {
+                docker { 
+                    image 'node:18-alpine'
+                    args '--network mercapp-net'
+                }
+            }
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    script {
+                        echo '🔍 Ejecutando análisis de calidad del Frontend...'
                         dir('frontend/mercappfrontend') {
-                            sh 'npm install sonar-scanner --save-dev'
+                            // Se ejecuta npm install para tener sonar-scanner disponible
+                            sh 'npm install'
                             sh 'node sonar-project.js'
                         }
                     }
                 }
             }
         }
+
 
         // ===========================================
         // ETAPA 4: CONSTRUCCIÓN DE IMÁGENES DOCKER
