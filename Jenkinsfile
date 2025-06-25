@@ -34,6 +34,7 @@ pipeline {
                     dir('frontend/mercappfrontend') {
                         echo '✅ Iniciando construcción del Frontend dentro de un contenedor Node.js...'
                         sh 'npm install'
+                        // Se añade --coverage para generar el reporte que SonarQube necesita
                         sh 'npm test -- --coverage --watchAll=false'
                         sh 'npm run build'
                         echo 'Frontend construido y probado exitosamente.'
@@ -45,8 +46,6 @@ pipeline {
         // ===========================================
         // ETAPA 3: ANÁLISIS DE CALIDAD CON SONARQUBE
         // ===========================================
-        // Se separó en dos etapas para usar el entorno correcto para cada una
-
         stage('SonarQube Analysis: Backend') {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
@@ -74,7 +73,10 @@ pipeline {
                         echo '🔍 Ejecutando análisis de calidad del Frontend...'
                         dir('frontend/mercappfrontend') {
                             sh 'npm install'
+                                                 
+                            sh 'apk add --no-cache openjdk17-jre'
                             sh 'chmod +x ./node_modules/.bin/sonar-scanner'
+                            
                             sh """
                                 ./node_modules/.bin/sonar-scanner \
                                 -Dsonar.host.url=http://sonarqube:9000 \
