@@ -1,13 +1,19 @@
+# Versión de la especificación de Docker Compose
+version: "3.8"
+
+# Definición de los servicios (contenedores)
 services:
+  # Servicio para el backend de Spring Boot
   backend:
     build:
       context: ./backend/MercappBackend
     container_name: springboot-backend
     ports:
-      - "8080:8080"
+      - "8096:8097"
     networks:
       - mercapp-network
 
+  # Servicio para el frontend de React
   frontend:
     build:
       context: ./frontend/mercappfrontend
@@ -19,6 +25,26 @@ services:
     networks:
       - mercapp-network
 
+  # Contenedor para el servidor de análisis de código SonarQube
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    ports:
+      - "9000:9000" # Puerto para acceder a la interfaz de SonarQube
+    networks:
+      - mercapp-network
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+# Definición de las redes personalizadas
 networks:
   mercapp-network:
     driver: bridge
+
+# Volúmenes para persistir los datos de SonarQube
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:

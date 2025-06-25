@@ -1,0 +1,17 @@
+const sonarqubeScanner = require('sonar-scanner');
+
+sonarqubeScanner(
+  {
+    serverUrl: 'http://localhost:9000',
+    options: {
+      'sonar.projectKey': 'mercapp-frontend',
+      'sonar.projectName': 'Mercapp Frontend',
+      'sonar.sources': 'src',
+      'sonar.tests': 'src',
+      'sonar.test.inclusions': '**/*.test.js,**/*.test.jsx',
+      'sonar.javascript.lcov.reportPaths': 'coverage/lcov.info',
+
+    },
+  },
+  () => process.exit()
+);

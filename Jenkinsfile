@@ -40,8 +40,30 @@ pipeline {
             }
         }
 
+                // ===========================================
+        // ETAPA 3: ANÁLISIS DE CALIDAD CON SONARQUBE
         // ===========================================
-        // ETAPA 3: CONSTRUCCIÓN DE IMÁGENES DOCKER
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    echo '🔍 Ejecutando análisis de calidad con SonarQube...'
+                    
+                    // Analizar Backend
+                    dir('backend/MercappBackend') {
+                        sh './mvnw sonar:sonar'
+                    }
+
+                    // Analizar Frontend
+                    dir('frontend/mercappfrontend') {
+                        sh 'npm install sonar-scanner --save-dev'
+                        sh 'node sonar-project.js'
+                    }
+                }
+            }
+        }
+
+        // ===========================================
+        // ETAPA 4: CONSTRUCCIÓN DE IMÁGENES DOCKER
         // ===========================================
         stage('Build Docker Images') {
             steps {
@@ -53,7 +75,7 @@ pipeline {
             }
         }
              // ===========================================
-        // ETAPA 4: DESPLIEGUE DE LA APLICACIÓN
+        // ETAPA 5: DESPLIEGUE DE LA APLICACIÓN
         // ===========================================
         stage('Deploy Application') {
             steps {
