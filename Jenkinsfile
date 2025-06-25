@@ -40,31 +40,40 @@ pipeline {
                 }
             }
         }
+        
 
-
-               // ===========================================
-        // ETAPA 2.1: ANÁLISIS DE CALIDAD CON SONARQUBE
-        // ===========================================-
-        // Se añade una pausa para dar tiempo a que SonarQube inicie completamente
+                // ===========================================
+        // ETAPA 2.1: Esperamos red
+        // ===========================================
         stage('Wait for SonarQube') {
+
+            agent {
+                docker {
+                    image 'alpine/curl:latest'
+                    args '--network mercapp-net'
+                }
+            }
             steps {
                 script {
-                    echo '⏳ Esperando 30 segundos a que el servidor de SonarQube esté listo...'
-                    sh 'sleep 30'
+                    echo '⏳ Esperando a que el servidor de SonarQube esté listo...'
+                    sh '''
+                        until curl -s http://sonarqube:9000/api/system/health | grep -q '"status":"UP"'; do
+                            echo -n '.'
+                            sleep 5
+                        done
+                        echo '✅ SonarQube está listo!'
+                    '''
                 }
             }
         }
-        
+
         // ===========================================
         // ETAPA 3: ANÁLISIS DE CALIDAD CON SONARQUBE
         // ===========================================
         stage('SonarQube Analysis: Backend') {
-            // Se añade un agente de Docker con Maven que se conecta a la red
             agent {
                 docker {
                     image 'maven:3.8.5-openjdk-17'
-                    // --- SOLUCIÓN AQUÍ ---
-                    // Se asegura que este agente también se conecte a la red correcta
                     args '--network mercapp-net'
                 }
             }
