@@ -71,14 +71,25 @@ pipeline {
                     script {
                         echo '🔍 Ejecutando análisis de calidad del Frontend...'
                         dir('frontend/mercappfrontend') {
-                            // Se ejecuta npm install para tener sonar-scanner disponible
+
                             sh 'npm install'
-                            sh 'node sonar-project.js'
+                            sh """
+                                ./node_modules/.bin/sonar-scanner \
+                                -Dsonar.host.url=http://sonarqube:9000 \
+                                -Dsonar.login=${SONAR_TOKEN} \
+                                -Dsonar.projectKey=mercapp-frontend \
+                                -Dsonar.projectName="Mercapp Frontend" \
+                                -Dsonar.sources=src \
+                                -Dsonar.tests=src \
+                                -Dsonar.test.inclusions="**/*.test.js,**/*.test.jsx" \
+                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                            """
                         }
                     }
                 }
             }
         }
+
 
 
         // ===========================================
