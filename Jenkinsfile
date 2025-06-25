@@ -73,6 +73,7 @@ pipeline {
                         dir('frontend/mercappfrontend') {
 
                             sh 'npm install'
+                            sh 'chmod +x ./node_modules/.bin/sonar-scanner'
                             sh """
                                 ./node_modules/.bin/sonar-scanner \
                                 -Dsonar.host.url=http://sonarqube:9000 \
