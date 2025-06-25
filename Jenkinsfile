@@ -45,7 +45,7 @@ pipeline {
         // ETAPA 3: ANÁLISIS DE CALIDAD CON SONARQUBE
         // ===========================================
         stage('SonarQube Analysis: Backend') {
-        
+            // Se añade un agente de Docker con Maven que se conecta a la red
             agent {
                 docker {
                     image 'maven:3.8.5-openjdk-17'
@@ -57,6 +57,7 @@ pipeline {
                     script {
                         echo '🔍 Ejecutando análisis de calidad del Backend...'
                         dir('backend/MercappBackend') {
+                            sh 'chmod +x mvnw'
                             sh "./mvnw sonar:sonar -Dsonar.login=${SONAR_TOKEN}"
                         }
                     }
